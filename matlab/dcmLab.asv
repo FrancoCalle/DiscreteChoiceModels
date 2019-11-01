@@ -15,17 +15,6 @@ classdef dcmLab
                 
                 parameters = Pack.allParameters(Pack.ThetaXj==1);
                 
-            elseif Pack.Model == "Model 2"
-                
-                parameters = [  Pack.allParameters(Pack.ThetaXj==1), ...
-                    Pack.allParameters(Pack.ThetaXiXj==1), ...
-                    ];
-                
-            elseif Pack.Model == "Model 3"
-                
-                parameters = [Pack.allParameters(Pack.ThetaXiXj==1), ...
-                    Pack.allParameters(Pack.ThetaXjType==1) ...
-                    ];
             end
             
             talents = true;
@@ -45,15 +34,16 @@ classdef dcmLab
 
             sample = Data.sample;
             nObs = sum(sample);
-            nOptions = size(Data.x1,2);
+            nOptions = size(Data.XX{1},2);
             nNodes = size(Data.q_Weights,1);
-
+            NXX = numel(Data.XX);
             %Unpack Data:
             
-            x1 = Data.x1(sample,:);
-            x2 = Data.x2(sample,:);
-            x3 = Data.x3(sample,:);
-            x4 = Data.x4(sample,:);
+            XX = {};
+            for nx = 1:NXX
+                XX{nx} = Data.XX{nx}(sample,:);
+            end
+            
             FeasibleSet = Data.FeasibleSet(sample,:);
             ScoresOption = Data.ScoreOption;
 
@@ -80,10 +70,10 @@ classdef dcmLab
                     parfor s = 1:nObs
                         
                         f = FeasibleSet(s,:);
-                        utilities =  x1(s,:) * parameters(1) + ...
-                            x2(s,:) * parameters(2)  + ...
-                            x3(s,:) * parameters(3) + ...
-                            x4(s,:) * parameters(4) ;
+                        utilities = zeros(1,nOptions);
+                        for nx = 1:NXX
+                            utilities = utilities + XX{nx}(s,:) * parameters(nx) 
+                        end
 
                         q_Nodes = q_NodesList{s};
                         ViNodes=P*q_Nodes;  %q_Nodes change by student
@@ -375,18 +365,16 @@ classdef dcmLab
 
             sample = Data.sample;
             nObs = sum(sample);
-            nOptions = size(Data.x1,2);
+            nOptions = size(Data.XX{1},2);
             nNodes = size(Data.q_Weights,1);
             nParameters  = size(parameters,2);
-
+            NXX = numel(Data.XX);
             %Unpack Data:
-            XX = {}; % Cell array containing 
-            XX{1} = Data.x1(sample,:);
-            XX{2} = Data.x2(sample,:);
-            XX{3} = Data.x3(sample,:);
-            XX{4} = Data.x4(sample,:);
+            XX = {}; 
+            for nx = 1:NXX
+                XX{nx} = Data.XX{nx}(sample, :); % Cell array containing X characteristics
+            end
             
-            Type = Data.Type(sample,:);
             FeasibleSet = Data.FeasibleSet(sample,:);
             ScoresOption = Data.ScoreOption;
 
@@ -519,20 +507,10 @@ classdef dcmLab
                         f_next = f;
                         f_next(pickIndex) = false;
                         
-                        utilities = zeros(1, size(XX{1},2));
-                        for ii = numel(XX)
-                            utilities =  XX{1}(s,:) * parameters(1) + ...
-                                XX{2}(s,:) * parameters(2)  + ...
-                                XX{3}(s,:) * parameters(3) + ...
-                                XX{4}(s,:) * parameters(4) ;
+                        utilities = zeros(1, nOptions);
+                        for ii = 1:NXX
+                            utilities = utilities + XX{ii}(s,:) * parameters(ii);
                         end
-
-                            utilities =  XX{1}(s,:) * parameters(1) + ...
-                                XX{2}(s,:) * parameters(2)  + ...
-                                XX{3}(s,:) * parameters(3) + ...
-                                XX{4}(s,:) * parameters(4) ;
-                        
-                        
                         
                         q_Nodes = q_NodesList{s};
                         ViNodes=P*q_Nodes;
@@ -570,7 +548,7 @@ classdef dcmLab
                             
                             %1. Derivative of first option Pr
                             % Compute the derivative across all XX associated to beta:
-                            for nx = 1:numel(XX) 
+                            for nx = 1:NXX 
                                 jj = nx;
                                 dLi(:,jj) = (XX{nx}(s,pickIndex).*prChoiceVi - sum(XX{nx}(s,:).*probabilitiesViAll,2).*prChoiceVi);
                                 dLi_temp(jj) = dLi(:,jj)'*ViWeights; % Parameters Beta
@@ -581,7 +559,7 @@ classdef dcmLab
                             
                             %Derivative for random coefficients
                             for nrc = 1:numel(dP)
-                                jj = nx + nrc;
+                                jj = NXX + nrc;
                                 dtemp_rc=ScoresOption*dP{nrc}*q_Nodes; 
                                 dLi(:,jj)=(prChoiceVi.*(dtemp_rc(pickIndex,:)'-sum(dtemp_rc'.*probabilitiesViAll,2)));
                                 dLi_temp(jj) = dLi(:,jj)'*ViWeights; % Random Coefficients
@@ -819,9 +797,9 @@ classdef dcmLab
         
         % 9.4. Optimization algorithm
         
-        function Theta = optimizationAlgorithm(initial_seed, batchSize, step, passedFunction)
+        function [Theta, thetaAll]= optimizationAlgorithm(initial_seed, batchSize, step, maxiter, passedFunction)
 
-            global Data ;
+            global Data;
             
             nObs = Data.nStudents;
             Theta = initial_seed;
@@ -851,7 +829,8 @@ classdef dcmLab
                     Traj=NaN(nBatches*100,4);
                     Gradient = 1;
                     dif = 1;
-                    while max(abs(Gradient))>10^-8 %&& dif>10^-100 %&& alpha>10^-100 %&& epoc < 1000
+                    thetaAll = [];
+                    while max(abs(Gradient))>10^-8 && itt < maxiter %&& dif>10^-100 %&& alpha>10^-100 %&& epoc < 1000
                         for b=1:nBatches
                             if nBatches>1
                                 Data.sample=(batchID==b);
@@ -862,6 +841,7 @@ classdef dcmLab
                             VdL=beta1*VdL+(1-beta1)*Gradient;
                             SdL=beta2*SdL+(1-beta2)*(Gradient.^2);
                             Theta = Theta-alpha*(VdL./(sqrt(SdL)+eps));
+                            thetaAll = [thetaAll; Theta]; 
                             if sum(Data.sample) == nObs
                                 dif=abs((Qo-Q)/Qo);
                             else
@@ -964,10 +944,11 @@ classdef dcmLab
 
             %Unpack Data:
             
-            x1 = Data.x1;
-            x2 = Data.x2;
-            x3 = Data.x3;
-            x4 = Data.x4;
+            XX = {};
+            for nx = 1:NXX
+                XX{nx} = Data.XX{nx}(sample, :); % Cell array containing X characteristics
+            end
+
             FeasibleSet = Data.FeasibleSet;
             ScoresOption = Data.ScoreOption;
 

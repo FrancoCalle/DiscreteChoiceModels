@@ -72,7 +72,7 @@ classdef dcmLab
                         f = FeasibleSet(s,:);
                         utilities = zeros(1,nOptions);
                         for nx = 1:NXX
-                            utilities = utilities + XX{nx}(s,:) * parameters(nx) 
+                            utilities = utilities + XX{nx}(s,:) * parameters(nx) ;
                         end
 
                         q_Nodes = q_NodesList{s};
@@ -797,9 +797,9 @@ classdef dcmLab
         
         % 9.4. Optimization algorithm
         
-        function Theta = optimizationAlgorithm(initial_seed, batchSize, step, passedFunction)
+        function [Theta, thetaAll]= optimizationAlgorithm(initial_seed, batchSize, step, maxiter, passedFunction)
 
-            global Data ;
+            global Data;
             
             nObs = Data.nStudents;
             Theta = initial_seed;
@@ -829,7 +829,8 @@ classdef dcmLab
                     Traj=NaN(nBatches*100,4);
                     Gradient = 1;
                     dif = 1;
-                    while max(abs(Gradient))>10^-8 %&& dif>10^-100 %&& alpha>10^-100 %&& epoc < 1000
+                    thetaAll = [];
+                    while max(abs(Gradient))>10^-8 && itt < maxiter %&& dif>10^-100 %&& alpha>10^-100 %&& epoc < 1000
                         for b=1:nBatches
                             if nBatches>1
                                 Data.sample=(batchID==b);
@@ -840,6 +841,7 @@ classdef dcmLab
                             VdL=beta1*VdL+(1-beta1)*Gradient;
                             SdL=beta2*SdL+(1-beta2)*(Gradient.^2);
                             Theta = Theta-alpha*(VdL./(sqrt(SdL)+eps));
+                            thetaAll = [thetaAll; Theta]; 
                             if sum(Data.sample) == nObs
                                 dif=abs((Qo-Q)/Qo);
                             else
@@ -933,23 +935,25 @@ classdef dcmLab
         
         % 10. Simulate Utilities and probabilities:
         
-        function [Utilities, probabilities] = simulateUtilities(parameters)
+        function Utilities = simulateUtilities(parameters)
             
             global Data;
-
-            nObs = size(Data.x1,1);
-            nOptions = size(Data.x1,2);
+            
+            NXX = numel(Data.XX);
+            nObs = size(Data.XX{1},1);
+            nOptions = size(Data.XX{1},2);
 
             %Unpack Data:
             
-            x1 = Data.x1;
-            x2 = Data.x2;
-            x3 = Data.x3;
-            x4 = Data.x4;
+            XX = {};
+            for nx = 1:NXX
+                XX{nx} = Data.XX{nx}; % Cell array containing X characteristics
+            end
+
             FeasibleSet = Data.FeasibleSet;
             ScoresOption = Data.ScoreOption;
 
-            q_Nodes = Data.q_Nodes;
+            q_NodeList = Data.q_Nodes;
             q_Weights = Data.q_Weights;
 
             RC1 = parameters(end-2);
@@ -959,10 +963,7 @@ classdef dcmLab
             P=[RC1 0;
                 rhoRC RC2]';
 
-            ViNodes=P.'*q_Nodes;
             ViWeights=q_Weights;
-
-            
 
             %Model 1:
             %--------                
@@ -971,25 +972,22 @@ classdef dcmLab
 
             for s = 1:nObs
 
+                q_Nodes = q_NodeList{s};
+                ViNodes=P*q_Nodes;
+ 
                 f = FeasibleSet(s,:);
-                utilities =  x1(s,f) * parameters(1) + ...
-                    x2(s,f) * parameters(2)  + ...
-                    x3(s,f) * parameters(3) + ...
-                    x4(s,f) * parameters(4) ;
+                utilities = zeros(1,nOptions);
+                for nx = 1:NXX
+                    utilities = utilities + XX{nx}(s,:) * parameters(nx);
+                end
 
                 %Estimate Utilities and Probabilities considering
                 %talents or not:
                 talentNode = ScoresOption * ViNodes(1:2,:);
 
-                utilitiesVi = utilities + talentNode(f,:)';
+                utilitiesVi = utilities(1,f) + talentNode(f,:)';
                 Utilities(s,f) = utilitiesVi'*ViWeights; 
 
-                %probabilitiesViAll = zeros(nNodes,nOptions);
-                %probabilitiesViAll(:,f) = exp(utilitiesVi(:,f))./sum(exp(utilitiesVi(:,f)),2);
-
-                %pickIndex = ChoiceIndex(s);
-                %prChoiceVi = probabilitiesViAll(:,pickIndex);
-                %probabilityChoice(s,1)= prChoiceVi'*ViWeights;
             end            
         end
       
