@@ -188,8 +188,6 @@ legend({'True Parameters'},'Location','northeast')
 
 %% Estimate changes in utility by eliminating options:
 
-%Data.FeasibleSet = TrueFeasible;
-
 utilities0  = dcmLab.simulateUtilities(parameters);
 [~,choice0] = max(utilities0,[],2);
 
