@@ -154,7 +154,7 @@ grid on
 batchSize = 2^10;
 
 %4.2. What happens when we start from the true values?
-initial_values  = randn(1,size(parameters,2)); %initial_values  = theta_init(s,:);
+initial_values  = theta_init(1,:); %initial_values  = theta_init(s,:);
 
 %4.3. Only Choice Pr
 Pack.w_choice = 0.5;
@@ -164,7 +164,7 @@ passedUtilityFunction = @(theta) dcmLab.utilityFunctionRC(theta, true);
 [theta_estimated_Adam, allTheta]= dcmLab.optimizationAlgorithm(initial_values, batchSize, 'Adam', 200, passedUtilityFunction);
 
 figure(2)
-kk = 120; %Number of iterations
+kk = 200; %Number of iterations
 scatter(kk.*ones(1,nXX),parameters(1:nXX), 's', 'LineWidth', 1.8, 'MarkerEdgeColor', [.17 .17 .17], 'MarkerFaceColor', 'none')
 hold on
 HH = plot(allTheta(1:kk,1:nXX), 'LineWidth', 1.8);

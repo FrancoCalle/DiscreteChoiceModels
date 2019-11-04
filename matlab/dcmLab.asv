@@ -11,14 +11,17 @@ classdef dcmLab
         
         % 1. Set model Parameters:
         
-        function parameters = setupParameters()
+        function parameters = setupParameters(randomCoefficients)
             
             global Pack
             
-            parameters = Pack.allParameters(Pack.ThetaXj==1);
+            if Pack.Model == "Model 1" || Pack.Model == "Model 1 Exploded Logit"
                 
-            if contains(Pack.Model,'RC')
+                parameters = Pack.allParameters(Pack.ThetaXj==1);
                 
+            end
+            
+            if randomCoefficients == true
                 parameters = [parameters, ...
                     Pack.allParameters(Pack.ThetaSigma==1) ...
                     Pack.allParameters(Pack.ThetaRho==1) ...
@@ -73,7 +76,7 @@ classdef dcmLab
                         for nx = 1:NXX
                             utilities = utilities + XX{nx}(s,:) * parameters(nx) ;
                         end
-                        
+
                         %Estimate Utilities and Probabilities considering
                         uni = rand(1,nOptions);
                         E   = gevinv(uni);
@@ -169,7 +172,7 @@ classdef dcmLab
             for nx = 1:NXX
                 XX{nx} = Data.XX{nx}(sample, :); % Cell array containing X characteristics
             end
-            
+
             utilities = zeros(nObs, nOptions);
             for ii = 1:NXX
                 utilities = utilities + XX{ii} * parameters(ii);
@@ -181,12 +184,12 @@ classdef dcmLab
             probabilities = bsxfun(@rdivide, exp(utilities), sum(exp(utilities),2));
             
             idx = sub2ind(size(probabilities), 1:nObs, ChoiceIndex');
-            probabilityChoice = probabilities(idx)';
-            
+            probabilityChoice = probabilities(idx)';            
+
             dL = NaN(nObs,NXX);
-            
+
             if gradient == true
-                for nx = 1:NXX
+                for nx = 1:NXX 
                     dLi = ((XX{nx} - sum(XX{nx}.*probabilities,2)));
                     dL(:,nx) = dLi(idx);
                 end
@@ -247,7 +250,7 @@ classdef dcmLab
                 
                 %Model 1:
                 %--------
-                case "Model 1 - RC"
+                case "Model 1"
                     
                     dL_temp = NaN(nObs,size(parameters,2));
                     
@@ -323,14 +326,14 @@ classdef dcmLab
                     
                     %Model 1 Exploded Logit:
                     %-----------------------
-                case "Model 1 Exploded Logit - RC"
+                case "Model 1 Exploded Logit"
                     
                     dL_temp = NaN(nObs,size(parameters,2));
                     dL_Joint_temp = NaN(nObs,size(parameters,2));
                     probabilityChoice = NaN(nObs, 1);
                     probabilityJoint = NaN(nObs, 1);
                     
-                    parfor s = 1:nObs
+                    for s = 1:nObs
                         
                         pickIndex = ChoiceIndex(s);
                         pickIndexNext = NextChoiceIndex(s);
@@ -454,7 +457,7 @@ classdef dcmLab
                     Q_total = Q_Choice;
                     Gradient = GradientChoice;
                     
-                case 'Model 1 Exploded Logit - RC'
+                case 'Model 1 Exploded Logit'
                     
                     sample = Data.sample;
                     nObs = size(sample,1);
@@ -510,21 +513,20 @@ classdef dcmLab
                 fprintf('Probability change:  Parameter %3.0f \n',i )
             end
             
-            if contains(Pack.Model, "Exploded")
-
+            if Pack.Model == "Model 1 Exploded Logit"
                 
                 [~, ~, ~, dPrChoice, ~, ~]=dcmLab.objectiveFunction(theta, passedUtilityFunction);
                 dif=abs((NUM_dPrChoice(:,1:i)-dPrChoice(:,1:i)));
                 difp=abs((NUM_dPrChoice(:,1:i)-dPrChoice(:,1:i)))./dPrChoice(:,1:i);
                 
-            else 
+            elseif Pack.Model == "Model 1"
                 
                 [~, dPrChoice]=dcmLab.objectiveFunction(theta, passedUtilityFunction);
                 dif=abs((NUM_dPrChoice(:,1:i)-dPrChoice(:,1:i)));
                 difp=abs((NUM_dPrChoice(:,1:i)-dPrChoice(:,1:i)))./dPrChoice(:,1:i);
-                
+
             end
-            
+
             for ii=1:i
                 fprintf('%3.0f -  : Levels %13.10f Percent %13.10f \n',[ii max(dif(:,ii)) max(difp(:,ii))])
             end
@@ -598,7 +600,7 @@ classdef dcmLab
             else
                 [~,Gradient]=dcmLab.objectiveFunction(theta,passedFunction);
             end
-            
+                
             
             dif=abs((NUM_Grad(1:i)-Gradient(1:i)'));
             difp=abs((NUM_Grad(1:i)-Gradient(1:i)'))./Gradient(1:i)';
@@ -613,6 +615,7 @@ classdef dcmLab
         function [x1,fobj1,flag1,output1] = estimationNLP(parameters, passedUtilityFunction)
             
             % Define Optimization Options:
+            
             
             options = optimoptions(@fminunc,    'MaxIter',2000,...
                 'MaxFunEvals', 2000, ...
@@ -801,76 +804,80 @@ classdef dcmLab
         function Utilities = simulateUtilities(parameters)
             
             global Data Pack;
-            
+
             NXX = numel(Data.XX);
             nObs = size(Data.XX{1},1);
             nOptions = size(Data.XX{1},2);
-            
+
             %Unpack Data:
-            
+
             XX = {};
             for nx = 1:NXX
                 XX{nx} = Data.XX{nx}; % Cell array containing X characteristics
             end
-            
+
             FeasibleSet = Data.FeasibleSet;
             ScoresOption = Data.ScoreOption;
-            
-            Utilities = NaN(nObs, nOptions);
 
             if contains(Pack.Model,'RC') %this is for the Random Coefficients
-                
+            
                 q_NodeList = Data.q_Nodes;
                 q_Weights = Data.q_Weights;
-                
+
                 RC1 = parameters(end-2);
                 RC2 = parameters(end-1);
                 rhoRC = parameters(end);
-                
+
                 P=[RC1 0;
                     rhoRC RC2]';
-                
+
                 ViWeights=q_Weights;
-                                
+
+                probabilities = NaN(nObs, nOptions);
+                Utilities = NaN(nObs, nOptions);
+
                 for s = 1:nObs
-                    
+
                     q_Nodes = q_NodeList{s};
                     ViNodes=P*q_Nodes;
-                    
+
                     f = FeasibleSet(s,:);
                     utilities = zeros(1,nOptions);
                     for nx = 1:NXX
                         utilities = utilities + XX{nx}(s,:) * parameters(nx);
                     end
-                    
+
                     %Estimate Utilities and Probabilities considering
                     %talents or not:
                     talentNode = ScoresOption * ViNodes(1:2,:);
-                    
+
                     utilitiesVi = utilities(1,f) + talentNode(f,:)';
                     Utilities(s,f) = utilitiesVi'*ViWeights;
-                    
+
                 end
                 
-            else %Not random coefficients model
-                                
-                for s = 1:nObs
+            else
+                
+                        f = FeasibleSet(s,:);
+                        utilities = zeros(1,nOptions);
+                        for nx = 1:NXX
+                            utilities = utilities + XX{nx}(s,:) * parameters(nx) ;
+                        end
 
-                    f = FeasibleSet(s,:);
-                    utilities = zeros(1,nOptions);
-                    for nx = 1:NXX
-                        utilities = utilities + XX{nx}(s,:) * parameters(nx) ;
-                    end
-
-                    %Estimate Utilities and Probabilities considering
-                    utilitiesVi = utilities(1,f);
-                    Utilities(s,f) = utilitiesVi;
-
-                end
+                        %Estimate Utilities and Probabilities considering
+                        uni = rand(1,nOptions);
+                        E   = gevinv(uni);
+                        utilities = (utilities + E);
+                        utilitiesVi = utilities;
+                        probabilitiesViAll = zeros(1,nOptions);
+                        probabilitiesViAll(:,f) = exp(utilitiesVi(:,f) - max(utilitiesVi(:,f), [],2))./sum(exp(utilitiesVi(:,f) - max(utilitiesVi(:,f), [],2)),2);
+                        
+                        probabilities(s,:) = probabilitiesViAll'*ViWeights;
+                    end                
                 
             end
             
-            
+                
         end
         
         
