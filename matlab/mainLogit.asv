@@ -46,7 +46,7 @@ nXX = numel(Data.XX);
 Pack.ThetaXj(1:nXX)=1;
 
 
-Pack.Model = 'Model 1 Exploded Logit'; %This define the set of parameters we're gonna use and the Model to estimate
+Pack.Model = 'Model 1'; %This define the set of parameters we're gonna use and the Model to estimate
 
 parameters = dcmLab.setupParameters();
 
@@ -79,9 +79,12 @@ theta_init = randn(1,size(parameters,2));
 passedUtilityFunction = @(theta) dcmLab.utilityFunction(theta, true);
 [theta_quasinewton,fobj1,~,~]=dcmLab.estimationNLP(theta_init, passedUtilityFunction);
 
-plot(min(parameters):0.01:max(parameters), min(parameters):0.01:max(parameters), 'Color', CC(7,:), 'LineWidth', 2)
+plot(min(parameters-1):0.01:max(parameters+1), min(parameters-1):0.01:max(parameters+1), 'Color', CC(50,:), 'LineWidth', 2)
 hold on 
 plot(theta_quasinewton, parameters(1:nXX), 'O', 'MarkerEdgeColor', CC(4,:), 'MarkerFaceColor', CC(4,:))
+xlabel('Estimated Parameters')
+ylabel('True Parameters')
+legend({'x = y'},'Location','southeast')
 ylim([-2 2])
 xlim([-2 2])
 box on 
@@ -102,14 +105,19 @@ figure(2)
 kk = nIter; %Number of iterations
 scatter(kk.*ones(1,nXX),parameters(1:nXX), 's', 'LineWidth', 1.8, 'MarkerEdgeColor', [.17 .17 .17], 'MarkerFaceColor', 'none')
 hold on
-HH = plot(allTheta(1:kk,1:nXX), 'LineWidth', 1.8);
+scatter(ones(1,nXX),initial_values(1:nXX), 'd', 'LineWidth', 1.8, 'MarkerEdgeColor', [.17 .17 .17], 'MarkerFaceColor', 'none')
+hold on
+HH = plot([initial_values(1:nXX); allTheta(1:kk,1:nXX)], 'LineWidth', 1.8);
 for ii = 1:nXX 
     HH(ii,1).Color = [CC(ii*6,:) .8];
 end
+xlim([1, nIter])
 box on
 grid on
 set(gcf, 'Units', 'Inches', 'Position', [0, 0, 8, 6], 'PaperUnits', 'Inches', 'PaperSize', [7.25, 9.125])
-legend({'True Parameters'},'Location','northeast')
+legend({'True Parameters', 'Initial Values'},'Location','northeast')
+ylabel('Parameter Values')
+xlabel('Number of Iterations')
 
 
 
