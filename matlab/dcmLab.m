@@ -44,20 +44,7 @@ classdef dcmLab
             end
             
             FeasibleSet = Data.FeasibleSet(sample,:);
-            ScoresOption = Data.ScoreOption;
-            
-            q_NodesList = Data.q_Nodes;
-            q_Weights = Data.q_Weights;
-            
-            RC1 = parameters(end-2);
-            RC2 = parameters(end-1);
-            rhoRC = parameters(end);
-            
-            P=[RC1 rhoRC;
-                0 RC2];
-            
-            ViWeights=q_Weights;
-            
+                       
             switch Pack.Model
                 
                 %Model 1:
@@ -82,13 +69,25 @@ classdef dcmLab
                         probabilitiesViAll = zeros(1,nOptions);
                         probabilitiesViAll(:,f) = exp(utilitiesVi(:,f) - max(utilitiesVi(:,f), [],2))./sum(exp(utilitiesVi(:,f) - max(utilitiesVi(:,f), [],2)),2);
                         
-                        probabilities(s,:) = probabilitiesViAll'*ViWeights;
+                        probabilities(s,:) = probabilitiesViAll;
                     end
                     
                 case {"Model 1 - RC", "Model 1 Exploded Logit - RC"}
                     
+                    ScoresOption = Data.ScoreOption;
                     nNodes = size(Data.q_Weights,1);
                     probabilities = NaN(nObs, nOptions);
+                    q_NodesList = Data.q_Nodes;
+                    q_Weights = Data.q_Weights;
+
+                    RC1 = parameters(end-2);
+                    RC2 = parameters(end-1);
+                    rhoRC = parameters(end);
+
+                    P=[RC1 rhoRC;
+                        0 RC2];
+
+                    ViWeights=q_Weights;
                     
                     parfor s = 1:nObs
                         

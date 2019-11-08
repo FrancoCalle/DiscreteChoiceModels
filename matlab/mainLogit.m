@@ -55,9 +55,6 @@ Pack.Model = 'Model 1'; %This define the set of parameters we're gonna use and t
 parameters = dcmLab.setupParameters();
 
 % 1.5. Generate Choices
-fakedata = true;
-gradient = false;
-
 dcmLab.generateFakeChoices(parameters, false); %Estimate fake data
 
 [~, dL]=dcmLab.utilityFunction(parameters , true); % Four args if 'Model 1 Exploded Logit'
