@@ -15,9 +15,9 @@ CC = parula(100);
 
 % 1.1. Define number of students and options in the model:
 
-nStudents = 8000;
-nOptions = 6;
-nXXcontinuous = 3;
+nStudents = 2000;
+nOptions = 10;
+nXXcontinuous = 2;
 Data.nStudents = nStudents;
 Data.nOptions = nOptions;
 
@@ -28,13 +28,11 @@ for ii = 1:nXXcontinuous
     Data.XX{ii} = randn(nStudents,nOptions); %Variable 1
 end
 
-Data.Type = randn(nStudents,1)>0;
-
 % Add fixed effects:
 for ii = 1:nOptions
     optFixedEffect = zeros(nStudents,nOptions);
     optFixedEffect(:,ii) = 1;
-    Data.XX{nXXcontinuous + ii} = optFixedEffect.*Data.Type; %Variable 1
+    Data.XX{nXXcontinuous + ii} = optFixedEffect; %Variable 1
 end
 
 nXX = numel(Data.XX);
@@ -77,11 +75,11 @@ parameters = dcmLab.setupParameters();
 %parameters = allParameters;
 
 % 1.4. Quadrature Points
-K=2;
+K=6;
 [Data.q_Nodes, Data.q_Weights ] = GHQuadInit(2, K );
 
 nVar   = 2;
-nNodes = 10;
+nNodes = 36;
 All_Nodes ={};
 for s = 1:nStudents
     All_Nodes{s} = randn(nVar,nNodes);
@@ -175,7 +173,7 @@ Pack.w_choice = 0;
 Pack.w_joint = 1;
 
 passedUtilityFunction = @(theta) dcmLab.utilityFunctionRC(theta, true);
-[theta_estimated_Adam, allTheta]= dcmLab.optimizationAlgorithm(initial_values, batchSize, 'Adam', 350, passedUtilityFunction);
+[theta_estimated_Adam, allTheta]= dcmLab.optimizationAlgorithm(initial_values, batchSize, 'Adam', 250, passedUtilityFunction);
 
 figure(2)
 kk = 120; %Number of iterations
@@ -205,7 +203,7 @@ box on
 grid on
 
 % With Fixed Effects:
-scatter(theta_estimated_Adam(1:end-3),parametersTransform(1:end-3), 's', 'LineWidth', 1.8, 'MarkerEdgeColor', [.17 .17 .17], 'MarkerFaceColor', 'none')
+scatter(theta_estimated_Adam,parametersTransform, 's', 'LineWidth', 1.8, 'MarkerEdgeColor', [.17 .17 .17], 'MarkerFaceColor', 'none')
 hold on
 plot(theta_estimated_Adam,theta_estimated_Adam, 'LineWidth', 1.8)
 box on

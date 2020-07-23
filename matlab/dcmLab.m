@@ -58,7 +58,9 @@ classdef dcmLab
                         f = FeasibleSet(s,:);
                         utilities = zeros(1,nOptions);
                         for nx = 1:NXX
-                            utilities = utilities + XX{nx}(s,:) * parameters(nx) ;
+                            %if nx ~= Data.nXXcontinuous+1
+                                utilities = utilities + XX{nx}(s,:) * parameters(nx) ;
+                            %end
                         end
                         
                         %Estimate Utilities and Probabilities considering
@@ -80,12 +82,19 @@ classdef dcmLab
                     q_NodesList = Data.q_Nodes;
                     q_Weights = Data.q_Weights;
                     
-                    RC1 = parameters(end-2);
-                    RC2 = parameters(end-1);
-                    rhoRC = parameters(end);
-                    
-                    P=[RC1 rhoRC;
-                        0 RC2];
+                    % Gradient transformation:
+                    xSigma = parameters(Pack.ThetaSigma==1);
+                    ThetaSigma= log(1+exp(xSigma));
+
+                    xRho = parameters(Pack.ThetaRho==1);
+                    ThetaRho=tanh(xRho); 
+
+                    RC1 = ThetaSigma(1);
+                    RC2 = ThetaSigma(2);
+                    rhoRC = ThetaRho(1);
+
+                    P = [RC1 0;  ...
+                        RC2*rhoRC RC2*sqrt(1-rhoRC^2)]';
                     
                     ViWeights=q_Weights;
                     
@@ -219,21 +228,32 @@ classdef dcmLab
             q_NodesList = Data.q_Nodes;
             q_Weights = Data.q_Weights;
             
-            RC1 = parameters(end-2);
-            RC2 = parameters(end-1);
-            rhoRC = parameters(end);
+            % Transforming elements for sigma and rho:
+            transformGradient=ones(nParameters,1);
+
+            xSigma = parameters(Pack.ThetaSigma==1);
+            ThetaSigma= log(1+exp(xSigma));
+            transformGradient(Pack.ThetaSigma==1)=(exp(xSigma))./(1+exp(xSigma));
+
+            xRho = parameters(Pack.ThetaRho==1);
+            ThetaRho=tanh(xRho); 
+            transformGradient(Pack.ThetaRho==1)=1-tanh(xRho)^2;
             
-            P=[RC1 rhoRC;
-                0 RC2];
+            RC1 = ThetaSigma(1);
+            RC2 = ThetaSigma(2);
+            rhoRC = ThetaRho(1);
+            
+            P = [RC1 0;  ...
+                RC2*rhoRC RC2*sqrt(1-rhoRC^2)]';
             
             % Gradients for Cholesky Decomposition
             dP = {};
             dP{1}=[1 0;
-                0 0];
+                0 0]';
             dP{2}=[0 0
-                0 1];
-            dP{3} =[0 1;
-                0 0];
+                rhoRC sqrt(1-rhoRC^2)]';
+            dP{3} =[0 0;
+                RC2 -RC2*rhoRC/sqrt(1-rhoRC^2)]';
             
             dtemp_rc = {};
             
@@ -346,8 +366,10 @@ classdef dcmLab
                         f_next(pickIndex) = false;
                         
                         utilities = zeros(1, nOptions);
-                        for ii = 1:NXX
-                            utilities = utilities + XX{ii}(s,:) * parameters(ii);
+                        for nx = 1:NXX
+                            %if nx ~= Data.nXXcontinuous+1
+                            utilities = utilities + XX{nx}(s,:) * parameters(nx);
+                            %end
                         end
                         
                         q_Nodes = q_NodesList{s};
@@ -387,12 +409,14 @@ classdef dcmLab
                             %1. Derivative of first option Pr
                             % Compute the derivative across all XX associated to beta:
                             for nx = 1:NXX
-                                jj = nx;
-                                dLi(:,jj) = (XX{nx}(s,pickIndex).*prChoiceVi - sum(XX{nx}(s,:).*probabilitiesViAll,2).*prChoiceVi);
-                                dLi_temp(jj) = dLi(:,jj)'*ViWeights; % Parameters Beta
-                                dLiNext(:,jj) = (XX{nx}(s,pickIndexNext).*prChoiceViNext - sum(XX{nx}(s,:).*probabilitiesViAllNext,2).*prChoiceViNext);
-                                dLiJoint(:,jj) = (dLi(:,jj).*prChoiceViNext + dLiNext(:,jj).*prChoiceVi); % Beta parameters
-                                dLiJoint_temp(jj) = dLiJoint(:,jj)'*ViWeights; % Average joint probability:
+                                %if nx ~= Data.nXXcontinuous+1
+                                    jj = nx;
+                                    dLi(:,jj) = (XX{nx}(s,pickIndex).*prChoiceVi - sum(XX{nx}(s,:).*probabilitiesViAll,2).*prChoiceVi);
+                                    dLi_temp(jj) = dLi(:,jj)'*ViWeights; % Parameters Beta
+                                    dLiNext(:,jj) = (XX{nx}(s,pickIndexNext).*prChoiceViNext - sum(XX{nx}(s,:).*probabilitiesViAllNext,2).*prChoiceViNext);
+                                    dLiJoint(:,jj) = (dLi(:,jj).*prChoiceViNext + dLiNext(:,jj).*prChoiceVi); % Beta parameters
+                                    dLiJoint_temp(jj) = dLiJoint(:,jj)'*ViWeights; % Average joint probability:
+                                %end
                             end
                             
                             %Derivative for random coefficients
@@ -417,11 +441,12 @@ classdef dcmLab
                         end
                     end
                     
-                    dL_temp = dL_temp./probabilityChoice;
+                    dL_temp = repmat(transformGradient',nObs,1).*dL_temp./probabilityChoice;
                     dL=dL_temp;
                     
                     dL_Joint_temp = dL_Joint_temp./probabilityJoint;
                     dL_Joint = dL_Joint_temp;
+                    dL_Joint = repmat(transformGradient',nObs,1).*dL_Joint;
                     
                 otherwise
                     warning('Model was not specified or does not exist.')
