@@ -1,10 +1,11 @@
 module dcmLab
     using LinearAlgebra, Combinatorics
     using Optim, Distributions
-    using DataFrames: DataFrame
+    using DataFrames
     using TexTables, OrderedCollections
     using RDatasets
-
+    using StatsBase
+    using Plots
 
     export fit
     export fit!
@@ -25,6 +26,8 @@ module dcmLab
     # abstract type vcov end
 
     ## Modules ##
+    include("generate_fake_data.jl")
+
     include("elogit.jl")
     include("elogit_asc.jl")
     include("elogit_dsc.jl")
@@ -33,4 +36,5 @@ module dcmLab
     include("logit_asc.jl")
     include("logit_dsc.jl")
     include("logit_hybrid.jl")
-end # module
+
+end 
