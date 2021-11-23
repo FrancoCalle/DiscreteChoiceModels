@@ -6,6 +6,7 @@ module dcmLab
     using RDatasets
     using StatsBase
     using Plots
+    using Combinatorics
 
     export fit
     export fit!

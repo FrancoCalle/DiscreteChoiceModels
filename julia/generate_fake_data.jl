@@ -19,6 +19,9 @@ function compute_fake_data(parameters)
     XX_list  = [rand(Normal(),(N,J)) for i in 1:K]
     Ω = rand(Normal(),(N,J)) .> 0.6
 
+    # Prices
+    p = rand(Normal(),J)
+
     # Placeholder for utilities
     u = zeros(size(XX_list[1])) 
     # Add atributes
@@ -35,16 +38,18 @@ function compute_fake_data(parameters)
     pr = exp.(u .- max_u)./sum.(eachrow(exp.(u .- max_u)))
     # Sample outcome based on probs:     # Y = [sample(1:J, Weights(pr[ii,:])) for ii in 1:N]
     Y = zeros(N); 
-    Rank = Array{Float64}[]
+    Rank = Array{Int64}[]
     for ii in 1:N 
         _, Y[ii]=findmax(pr[ii,:]) 
         ω = findall(x->x==1, Ω[ii,:])
         u_lookup = Dict(Pair.(ω,u[ii,:][ω]))
         rank = sort(ω, by=x->u_lookup[x], rev=true)
-        push!(Rank, rank)
+        push!(Rank, Int.(rank))
     end
     
-    return Y, XX_list, Rank, Ω
+    Y = Int.(Y)
+    
+    return Y, XX_list, p, Rank, Ω
 
 end
 
