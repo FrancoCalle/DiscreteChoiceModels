@@ -116,10 +116,10 @@ res = optimize(func, θ_0, LBFGS(), Optim.Options(iterations = 1000))
 
 
 # Using Autodiff:
-od = OnceDifferentiable(func, θ_0; autodiff = :forward)
-td = TwiceDifferentiable(func, θ_0; autodiff = :forward)
-res = Optim.minimizer(optimize(td, θ_0, BFGS()))
+# od = OnceDifferentiable(func, θ_0; autodiff = :forward)
+# td = TwiceDifferentiable(func, θ_0; autodiff = :forward)
+# res = Optim.minimizer(optimize(od, θ_0, BFGS()))
 
 # Using Autodiff:
-using ForwardDiff
-d_alogit(x) = ForwardDiff.gradient(func, θ_0)
+# using ForwardDiff
+# d_alogit(x) = ForwardDiff.gradient(func, θ_0)

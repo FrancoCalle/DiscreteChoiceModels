@@ -1,8 +1,3 @@
-logistic(p, γ0, γ) = exp(γ0 + p*γ)/(1 + exp(γ0 + p*γ))
-
-P(Ω_i,j) = [C for C in collect(powerset(Ω_i)) if j in C]    
-
-
 function considerationProbability_C(C, Ω_i, j, p, γ0, γ)
 
     π_C = 1
@@ -49,6 +44,10 @@ function logit_asc(θ, Y, XX_list, p, Rank)
     K = length(XX_list)
     u = zeros(size(XX_list[1])); for k in 1:K u .+= XX_list[k].*β[k] end 
 
+    # Define some functions:
+    logistic(p, γ0, γ) = exp(γ0 + p*γ)/(1 + exp(γ0 + p*γ))
+    P(Ω_i,j) = [C for C in collect(powerset(Ω_i)) if j in C]    
+    
     logL = 0
 
     for ii in 1:N
