@@ -17,7 +17,7 @@ function compute_fake_data(parameters)
     # Get XXs and Omega
     K = length(β)
     XX_list  = [rand(Normal(),(N,J)) for i in 1:K]
-    Ω = rand(Normal(),(N,J)) .> 0.7
+    Ω = rand(Normal(),(N,J)) .> 0.6
 
     # Placeholder for utilities
     u = zeros(size(XX_list[1])) 
@@ -34,11 +34,17 @@ function compute_fake_data(parameters)
     # Get probabilities:
     pr = exp.(u .- max_u)./sum.(eachrow(exp.(u .- max_u)))
     # Sample outcome based on probs:     # Y = [sample(1:J, Weights(pr[ii,:])) for ii in 1:N]
-    Y = zeros(N); for ii in 1:N _, Y[ii]=findmax(pr[ii,:]) end
-    # ω = findall(x->x==1, Ω[ii,:])
-
-
-    return Y, XX_list, Ω
+    Y = zeros(N); 
+    Rank = Array{Float64}[]
+    for ii in 1:N 
+        _, Y[ii]=findmax(pr[ii,:]) 
+        ω = findall(x->x==1, Ω[ii,:])
+        u_lookup = Dict(Pair.(ω,u[ii,:][ω]))
+        rank = sort(ω, by=x->u_lookup[x], rev=true)
+        push!(Rank, rank)
+    end
+    
+    return Y, XX_list, Rank, Ω
 
 end
 
