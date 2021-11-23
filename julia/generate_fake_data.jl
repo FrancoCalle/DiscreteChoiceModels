@@ -35,6 +35,8 @@ function compute_fake_data(parameters)
     pr = exp.(u .- max_u)./sum.(eachrow(exp.(u .- max_u)))
     # Sample outcome based on probs:     # Y = [sample(1:J, Weights(pr[ii,:])) for ii in 1:N]
     Y = zeros(N); for ii in 1:N _, Y[ii]=findmax(pr[ii,:]) end
+    # ω = findall(x->x==1, Ω[ii,:])
+
 
     return Y, XX_list, Ω
 

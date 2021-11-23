@@ -1,4 +1,4 @@
-function objective_function(β, Y, XX_list, Ω)
+function logit(β, Y, XX_list, Ω)
 
     N = size(XX_list[1],1)
     K = length(XX_list)
@@ -16,7 +16,3 @@ function objective_function(β, Y, XX_list, Ω)
     return -logL
 
 end
-
-
-
-
