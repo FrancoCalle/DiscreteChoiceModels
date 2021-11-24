@@ -1,11 +1,11 @@
-function prob_hybrid_ij(Ω_i, u_i, j, j_lag, p, γ0, γ)
+function prob_hybrid_ij(pr_j, j, j_lag, p, γ0, γ)
 
     μ = logistic(p[j_lag], γ0, γ)
 
     if j == j_lag
-        s_ij = (1-μ) + μ * prob_asc_ij(Ω_i, u_i, j, p, γ0, γ)
+        s_ij = (1-μ) + μ * pr_j
     else
-        s_ij = μ * prob_asc_ij(Ω_i, u_i, j, p, γ0, γ)
+        s_ij = μ * pr_j
     end
 
     return s_ij
@@ -41,7 +41,8 @@ function logit_hybrid(θ, Y_t, XX_list, p_t, Rank_t)
             j_lag = yLag[ii]
             Ω_i = rank[ii]
             u_i = u[ii,:]
-            sj = prob_hybrid_ij(Ω_i, u_i, j, j_lag, p, γ0, γ)
+            pr_j = prob_asc_ij(Ω_i, u_i, j, p, γ0, γ)
+            sj = prob_hybrid_ij(pr_j, j, j_lag, p, γ0, γ)
 
             # println(sj)
             if (sj>0) & (sj<1)

@@ -1,14 +1,14 @@
 # DSC: Default Specific Model
 #---------------------------------
 
-function prob_dsc_ij(Ω_i, u_i, j, j_lag, p, γ0, γ)
+function prob_dsc_ij(pr_ij, j, j_lag, p, γ0, γ)
 
     μ = logistic(p[j_lag], γ0, γ)
 
     if j == j_lag
-        s_ij = (1-μ) + μ * choiceProbability_ij(Ω_i, u_i, j)
+        s_ij = (1-μ) + μ * pr_ij
     else
-        s_ij = μ * choiceProbability_ij(Ω_i, u_i, j)
+        s_ij = μ * pr_ij
     end
 
     return s_ij
@@ -43,7 +43,8 @@ function logit_dsc(θ, Y_t, XX_list, p_t, Rank_t)
             j_lag = yLag[ii]
             Ω_i = rank[ii]
             u_i = u[ii,:]
-            sj = prob_dsc_ij(Ω_i, u_i, j, j_lag, p, γ0, γ)
+            pr_j = choiceProbability_ij(Ω_i, u_i, j)
+            sj = prob_dsc_ij(pr_j, j, j_lag, p, γ0, γ)
 
             # println(sj)
             if (sj>0) & (sj<1)
