@@ -29,6 +29,7 @@ module dcmLab
     ## Modules ##
     include("generate_fake_data.jl")
 
+    include("utils.jl")
     include("elogit.jl")
     include("elogit_asc.jl")
     include("elogit_dsc.jl")
