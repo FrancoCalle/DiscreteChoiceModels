@@ -68,7 +68,7 @@ res = optimize(func, θ_0, LBFGS(), Optim.Options(iterations = 1000))
 scatter(parameters.β, θ_hat[1:5])
 
 
-# logit_dsc: Optimizing Well
+# logit_dsc: Optimizing well...
 #-------------------------------------------------------
 
 parameters = dcmLab.define_parameters(10000,10,5,rand(5),0.5,0.9)
@@ -89,7 +89,7 @@ scatter(parameters.β, θ_hat[1:5])
 
 
 
-# logit_hybrid: 
+# logit_hybrid: Optimizing well...
 #-------------------------------------------------------
 
 parameters = dcmLab.define_parameters(10000,10,5,rand(5),0.5,0.9)
@@ -97,10 +97,12 @@ Y_t, XX_list, p_t, Rank_t, Ω = dcmLab.compute_fake_data_dsc(parameters)
 
 
 β₀ = rand(5)
-θ_0 = zeros(7)
+θ_0 = zeros(9)
 θ_0[1:5] = β₀ 
 θ_0[6] = -0.3
 θ_0[7] = 0.5
+θ_0[6] = -0.2
+θ_0[7] = 0.8
 
 dcmLab.logit_hybrid(θ_0, Y_t, XX_list, p_t, Rank_t)
 
