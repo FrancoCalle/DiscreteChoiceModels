@@ -29,10 +29,11 @@ function prob_asc_ij(Ω_i, u_i, j, p, γ0, γ)
 
 end
 
-function logit_asc(θ, Y, XX_list, p, Rank)
+function logit_asc(θ, Y, XX_list, PP)
 
     N = size(XX_list[1],1)
     K = length(XX_list)
+    J = size(XX_list[1],2)
 
     β = θ[1:K]
     γ0 = θ[K+1]
@@ -42,10 +43,11 @@ function logit_asc(θ, Y, XX_list, p, Rank)
     
     logL = 0
 
-    for ii in 1:N
-        j = Y[ii]
-        Ω_i = Rank[ii]
+    @threads for ii in 1:N
+        j = Y[ii]       # Outcome selected
+        Ω_i = Array(1:J) #Rank[ii]  # 
         u_i = u[ii,:]
+        p = PP[ii,:]
         sj = prob_asc_ij(Ω_i, u_i, j, p, γ0, γ)
         if sj>0
             logL += log(sj)/N

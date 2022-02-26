@@ -22,7 +22,7 @@ function logit_hybrid(θ, Y_t, XX_list, p_t, Rank_t)
         yLag = Y_t[t-1]
         p = p_t[:,t]
 
-        for ii in 1:1000
+        for ii in 1:N
 
             j = y[ii]
             j_lag = yLag[ii]

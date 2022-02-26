@@ -3,7 +3,7 @@ module dcmLab
     using Optim, Distributions
     using DataFrames
     using TexTables, OrderedCollections
-    using RDatasets
+    using Base.Threads
     using StatsBase
     using Plots
     using Combinatorics
@@ -14,21 +14,8 @@ module dcmLab
     export summary
     export tidy
 
-    ## Types ##
-    # abstract type Model end
-    # abstract type LinearModel <: Model  end
-    # abstract type GeneralisedLinearModel <: Model end
-
-
-    # abstract type Fit <: Model end
-    # abstract type LinearModelFit <: Fit end
-
-
-    # abstract type vcov end
-
     ## Modules ##
     include("generate_fake_data.jl")
-
     include("utils.jl")
     include("elogit.jl")
     include("elogit_asc.jl")

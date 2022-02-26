@@ -1,11 +1,13 @@
+
 struct define_parameters
     N::Int64
     J::Int64
     T::Int64
     β::Array
-    σ::Float64
-    ρ::Float64
+    γ::Float64
+    γ0::Float64
 end
+
 
 
 function compute_fake_data(parameters)
@@ -60,13 +62,29 @@ function compute_fake_data_asc(parameters)
     J = parameters.J
     β = parameters.β
 
+    γ = parameters.γ
+    γ0 = parameters.γ0
+
+
     # Get XXs and Omega
     K = length(β)
     XX_list  = [rand(Normal(),(N,J)) for i in 1:K]
-    Ω = rand(Normal(),(N,J)) .> 0.6
 
-    # Prices
-    p = rand(Normal(),J)
+    # Consideration set variables:
+    p = rand(Normal(),J)    # Prices
+    x = rand(Normal(),N)    # X Characteristics:
+    px = x .* p'
+
+    v_search = γ .* px .+ γ0
+    pr_search = exp.(v_search) ./ (1 .+ exp.(v_search))
+    Ω = Bool.(rand.(Binomial.(Ref(1), pr_search)))
+
+    flag_non = sum(Ω, dims=2) .== 0
+    if sum(flag_non)>0
+        index_non = findall(x -> x == 1 ,flag_non[:])
+        Ω[index_non,1] .= 1
+    end
+
 
     # Placeholder for utilities
     u = zeros(size(XX_list[1])) 
@@ -80,6 +98,8 @@ function compute_fake_data_asc(parameters)
     u[.~Ω] .= -Inf
     # Get maximum:
     max_u = maximum.(eachrow(u))
+
+
     # Get probabilities:
     pr = exp.(u .- max_u)./sum.(eachrow(exp.(u .- max_u)))
     # Sample outcome based on probs:     # Y = [sample(1:J, Weights(pr[ii,:])) for ii in 1:N]
@@ -95,7 +115,7 @@ function compute_fake_data_asc(parameters)
     
     Y = Int.(Y)
     
-    return Y, XX_list, p, Rank, Ω
+    return Y, XX_list, px, p, Rank, Ω
 
 end
 
