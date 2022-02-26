@@ -18,9 +18,8 @@ function considerationProbability_C(C, Ω_i, j, p, γ0, γ)
 end
 
 
-function prob_asc_ij(Ω_i, u_i, j, p, γ0, γ)
+function prob_asc_ij(Ω_i, Cset, u_i, j, p, γ0, γ)
 
-    Cset = P(Ω_i,j)
     π_C = considerationProbability_C.(Cset, Ref(Ω_i), j, Ref(p), γ0, γ)
     s_C = choiceProbability_ij.(Cset, Ref(u_i), j)
     s_ij = sum(π_C.*s_C)
@@ -29,7 +28,18 @@ function prob_asc_ij(Ω_i, u_i, j, p, γ0, γ)
 
 end
 
-function logit_asc(θ, Y, XX_list, PP)
+function obtain_power_set(J,Y)
+
+    Ω_i = Array(1:J)
+
+    Cset_list = [P(Ω_i,Y[j]) for j = 1:size(Y,1)]; # Power set for all individuals...
+    
+    return Cset_list
+
+end
+
+
+function logit_asc(θ, Y, XX_list, PP, Cset_list)
 
     N = size(XX_list[1],1)
     K = length(XX_list)
@@ -46,9 +56,10 @@ function logit_asc(θ, Y, XX_list, PP)
     @threads for ii in 1:N
         j = Y[ii]       # Outcome selected
         Ω_i = Array(1:J) #Rank[ii]  # 
+        Cset = Cset_list[ii]
         u_i = u[ii,:]
         p = PP[ii,:]
-        sj = prob_asc_ij(Ω_i, u_i, j, p, γ0, γ)
+        sj = prob_asc_ij(Ω_i, Cset, u_i, j, p, γ0, γ)
         if sj>0
             logL += log(sj)/N
         end
