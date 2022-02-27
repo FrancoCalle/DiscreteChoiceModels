@@ -45,8 +45,8 @@ Cset_list = dcmLab.obtain_power_set(J,Y);
 dcmLab.logit_asc(θ_0, Y, XX_list, px, Cset_list)
 
 # Optimize:
-func(θ) = dcmLab.logit_asc(θ, Y, XX_list, px)
-res = optimize(func, θ_true, NelderMead(), Optim.Options(iterations = 1500))
+func(θ) = dcmLab.logit_asc(θ, Y, XX_list, px, Cset_list)
+res = optimize(func, θ_true, NelderMead(), Optim.Options(iterations = 3000))
 θ_hat = Optim.minimizer(res)
 
 scatter(θ_true, θ_hat,legend=:bottomright)
@@ -77,7 +77,7 @@ obj_list = zeros(length(γ0_grid))
 for ii in 1:length(γ0_grid)
     parameters = copy(θ_true)
     parameters[end-1] = γ0_grid[ii]
-    obj_list[ii] = dcmLab.logit_asc(parameters, Y, XX_list, px)
+    obj_list[ii] = dcmLab.logit_asc(parameters, Y, XX_list, px, Cset_list)
 end
 
 plot(γ0_grid, obj_list[1:121], linewidth = 5, linecolor=:red, label="Log Likelihood" )
@@ -92,14 +92,72 @@ obj_list = zeros(length(β1_grid))
 for ii in 1:length(β1_grid)
     parameters = copy(θ_true)
     parameters[1] = β1_grid[ii]
-    obj_list[ii] = dcmLab.logit_asc(parameters, Y, XX_list, px)
+    obj_list[ii] = dcmLab.logit_asc(parameters, Y, XX_list, px, Cset_list)
 end
 
-plot(γ0_grid, obj_list, linewidth = 5, linecolor=:red, label="Log Likelihood" )
-vline!([β[1]], linewidth=4, linecolor=:blue, label="γ = 0.01")
-savefig("q2_minimizing_at_β1.pdf")
+plot(β1_grid, obj_list, linewidth = 5, linecolor=:red, label="Log Likelihood" )
+vline!([β[1]], linewidth=4, linecolor=:blue, label="β1 = 0.972")
+savefig("../figures/F1_grid_search_for_beta1.pdf")
 
 
 
+# Minimizing at β2:
+β2_grid = Array(β[2] - 3:0.05:β[2] + 3)
+obj_list = zeros(length(β2_grid))
+for ii in 1:length(β2_grid)
+    parameters = copy(θ_true)
+    parameters[2] = β2_grid[ii]
+    obj_list[ii] = dcmLab.logit_asc(parameters, Y, XX_list, px, Cset_list)
+end
+
+plot(β2_grid, obj_list, linewidth = 5, linecolor=:red, label="Log Likelihood" )
+vline!([β[2]], linewidth=4, linecolor=:blue, label="β2 = 0.67")
+savefig("../figures/F1_grid_search_for_beta2.pdf")
+
+
+
+# Minimizing at β3:
+β3_grid = Array(β[3] - 3:0.05:β[3] + 3)
+obj_list = zeros(length(β3_grid))
+for ii in 1:length(β3_grid)
+    parameters = copy(θ_true)
+    parameters[3] = β3_grid[ii]
+    obj_list[ii] = dcmLab.logit_asc(parameters, Y, XX_list, px, Cset_list)
+end
+
+plot(β3_grid, obj_list, linewidth = 5, linecolor=:red, label="Log Likelihood" )
+vline!([β[3]], linewidth=4, linecolor=:blue, label="β3 = 0.63")
+savefig("../figures/F1_grid_search_for_beta3.pdf")
+
+
+
+# Minimizing at β5:
+β4_grid = Array(β[4] - 3:0.05:β[4] + 3)
+obj_list = zeros(length(β4_grid))
+for ii in 1:length(β4_grid)
+    parameters = copy(θ_true)
+    parameters[4] = β4_grid[ii]
+    obj_list[ii] = dcmLab.logit_asc(parameters, Y, XX_list, px, Cset_list)
+end
+
+plot(β4_grid, obj_list, linewidth = 5, linecolor=:red, label="Log Likelihood" )
+vline!([β[4]], linewidth=4, linecolor=:blue, label="β4 = 0.98")
+savefig("../figures/F1_grid_search_for_beta4.pdf")
+
+
+
+
+# Minimizing at β5:
+β5_grid = Array(β[5] - 3:0.05:β[5] + 3)
+obj_list = zeros(length(β5_grid))
+for ii in 1:length(β5_grid)
+    parameters = copy(θ_true)
+    parameters[5] = β5_grid[ii]
+    obj_list[ii] = dcmLab.logit_asc(parameters, Y, XX_list, px, Cset_list)
+end
+
+plot(β5_grid, obj_list, linewidth = 5, linecolor=:red, label="Log Likelihood" )
+vline!([β[5]], linewidth=4, linecolor=:blue, label="β5 = 0.98")
+savefig("../figures/F1_grid_search_for_beta5.pdf")
 
 
