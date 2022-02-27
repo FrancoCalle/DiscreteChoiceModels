@@ -7,7 +7,7 @@ using Combinatorics
 using Distributions
 
 # Parameter Values:
-N = 10000;
+N = 300;
 J = 10;
 T = 5;
 
@@ -46,7 +46,10 @@ dcmLab.logit_asc(θ_0, Y, XX_list, px, Cset_list)
 
 # Optimize:
 func(θ) = dcmLab.logit_asc(θ, Y, XX_list, px, Cset_list)
-res = optimize(func, θ_true, NelderMead(), Optim.Options(iterations = 3000))
+res = optimize(func, θ_true, NelderMead(), Optim.Options(iterations = 3000,
+                                                        show_trace=true,
+                                                        show_every=20)
+                                                        )
 θ_hat = Optim.minimizer(res)
 
 scatter(θ_true, θ_hat,legend=:bottomright)
