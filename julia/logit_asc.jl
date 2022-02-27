@@ -51,9 +51,11 @@ function logit_asc(θ, Y, XX_list, PP, Cset_list)
 
     u = zeros(size(XX_list[1])); for k in 1:K u .+= XX_list[k].*β[k] end 
     
-    logL = 0
+    # Preallocate for paralelization work
+    logL_i = zeros(N)
 
-    @threads for ii in 1:N
+    @threads for ii = 1:N
+    # for ii = 1:N
         j = Y[ii]       # Outcome selected
         Ω_i = Array(1:J) #Rank[ii]  # 
         Cset = Cset_list[ii]
@@ -61,9 +63,11 @@ function logit_asc(θ, Y, XX_list, PP, Cset_list)
         p = PP[ii,:]
         sj = prob_asc_ij(Ω_i, Cset, u_i, j, p, γ0, γ)
         if sj>0
-            logL += log(sj)/N
+            logL_i[ii] = log(sj)/N
         end
     end
+    
+    logL = sum(logL_i)
 
     return -logL
 

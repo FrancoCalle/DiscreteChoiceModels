@@ -46,21 +46,22 @@ dcmLab.logit_asc(θ_0, Y, XX_list, px, Cset_list)
 
 # Optimize:
 func(θ) = dcmLab.logit_asc(θ, Y, XX_list, px, Cset_list)
-res = optimize(func, θ_true, NelderMead(), Optim.Options(iterations = 3000,
+res = optimize(func, rand(7), NelderMead(), Optim.Options(iterations = 600,
                                                         show_trace=true,
                                                         show_every=20)
                                                         )
 θ_hat = Optim.minimizer(res)
 
-scatter(θ_true, θ_hat,legend=:bottomright)
+scatter(θ_true, θ_hat,legend=:bottomright, label="Elasticity Parameters")
+scatter!(θ_true[[6,7]], θ_hat[[6,7]],color=:red, legend=:bottomright, label="CS Parameters")
 plot!([minimum(θ_true), maximum(θ_true)],[minimum(θ_true), maximum(θ_true)])
-
+savefig("../figures/model_fit.pdf")
 
 # Grid Search over different parameters:
 # -------------------------------------
 
 # Minimizing at γ:
-γ_grid = Array(γ- 5:0.05:γ+ 5)
+γ_grid = Array(γ- 1:0.01:γ+ 1)
 obj_list = zeros(length(γ_grid))
 for ii in 1:length(γ_grid)
     parameters = copy(θ_true)
@@ -75,7 +76,7 @@ savefig("../figures/F1_grid_search_for_gamma.pdf")
 
 
 # Minimizing at γ0:
-γ0_grid = Array(γ0 - 3:0.05:γ0 + 3)
+γ0_grid = Array(γ0 - 1:0.01:γ0 + 60)
 obj_list = zeros(length(γ0_grid))
 for ii in 1:length(γ0_grid)
     parameters = copy(θ_true)
@@ -83,7 +84,7 @@ for ii in 1:length(γ0_grid)
     obj_list[ii] = dcmLab.logit_asc(parameters, Y, XX_list, px, Cset_list)
 end
 
-plot(γ0_grid, obj_list[1:121], linewidth = 5, linecolor=:red, label="Log Likelihood" )
+plot(γ0_grid, obj_list, linewidth = 5, linecolor=:red, label="Log Likelihood" )
 vline!([γ0], linewidth=4, linecolor=:blue, label="γ = 0.01")
 savefig("../figures/F1_grid_search_for_gamma0.pdf")
 
