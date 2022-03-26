@@ -13,14 +13,14 @@ function considerationProbability_C(C, Ω_i, j, p, γ0, γ)
         end
     end
 
-    return π_C
+    return π_C./sum(π_C)
 
 end
 
 
 function prob_asc_ij(Ω_i, Cset, u_i, j, p, γ0, γ)
 
-    π_C = considerationProbability_C.(Cset, Ref(Ω_i), j, Ref(p), γ0, γ)
+    π_C = considerationProbability_C.(Cset, Ref(Ω_i), j, Ref(p), γ0, γ) # This has to add up to 1
     s_C = choiceProbability_ij.(Cset, Ref(u_i), j)
     s_ij = sum(π_C.*s_C)
 
@@ -54,8 +54,8 @@ function logit_asc(θ, Y, XX_list, PP, Cset_list)
     # Preallocate for paralelization work
     logL_i = zeros(N)
 
-    @threads for ii = 1:N
-    # for ii = 1:N
+    @threads for ii = 1:N # for ii = 1:N
+        
         j = Y[ii]       # Outcome selected
         Ω_i = Array(1:J) #Rank[ii]  # 
         Cset = Cset_list[ii]

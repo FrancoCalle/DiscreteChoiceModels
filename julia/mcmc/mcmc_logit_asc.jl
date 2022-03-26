@@ -142,10 +142,10 @@ end
 
 #-----------------------------------------------------------------------------------
 
-
 # Parameter Values:
-N = 300;
-J = 10;
+R = 5000
+N = 5000;
+J = 4;
 T = 5;
 
 β = [0.972, 0.67, 0.63, 0.55, 0.98];
@@ -163,7 +163,7 @@ Threads.nthreads()
 
 
 # ASC: Optimizing Well
-#------------------------------------------------------
+#------------------------------------------------------ 
 
 # Set Parameters and Simulate Fake Data:
 
@@ -172,16 +172,15 @@ Y, XX_list, px, p, Rank, Ω = dcmLab.compute_fake_data_asc(parameters);
 Cset_list = dcmLab.obtain_power_set(J,Y);
 
 
-α_init = copy(θ_true) #rand(7)
-# α_init = rand(7)
+α_init = copy(θ_true) #rand(7) # α_init = rand(7)
 md = ModelData(Y, XX_list, px, Cset_list);
 Θ_init = ModelParameters(α_init); # Initialize parameters
 m_init = MarkovState(md, Θ_init, -dcmLab.logit_asc(α_init, Y, XX_list, px, Cset_list)); # Initialize markov state
-α_draws = MetropolisHastings(2000, m_init);
+α_draws = MetropolisHastings(R, m_init);
 
-histogram(α_draws[:,1])
+histogram(α_draws[:,2])
 
-plot(α_draws[:,7])
+plot(α_draws[:,4])
 
 
 nIter= 300

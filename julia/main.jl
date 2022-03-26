@@ -23,11 +23,11 @@ Y, XX_list, p, Rank, Ω = dcmLab.compute_fake_data(parameters);
 
 # Optimize using built in solvers:
 func(β) = dcmLab.logit(β, Y, XX_list, Ω)
-res = optimize(func, β₀, LBFGS(), Optim.Options(iterations = 1000))
+res = optimize(func, rand(5), LBFGS(), Optim.Options(iterations = 1000))
 β_hat = Optim.minimizer(res)
 
 # Plot Fit:
-scatter(parameters.β,β_hat)
+scatter(parameters.β[1:end],β_hat[1:end])
 plot!([minimum(parameters.β), maximum(parameters.β)],[minimum(parameters.β), maximum(parameters.β)])
 
 
